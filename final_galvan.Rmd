@@ -1,0 +1,84 @@
+---
+title: "Tarea Ing de Caract"
+output:
+  pdf_document:
+    latex_engine: xelatex
+---
+
+# Tarea
+
+## Cargar datos
+
+```{r}
+library(titanic)
+library(dplyr)
+library(rmarkdown)
+# Cargar los datos del Titanic
+data("titanic_train")
+
+# Mostrar una vista previa de los datos
+head(titanic_train)
+```
+
+## One hot encoding
+
+La siguiente seccion se utilizara el metodo OneHotEncoding, el cual consiste en crear una columna binaria (que solo puede contener los valores 0 o 1) para cada valor único que exista en la variable categórica que estamos codificando, y marcar con un 1 la columna correspondiente al valor presente en cada registro, dejando las demás columnas con un valor de 0.
+
+```{r}
+# Dataframe con la variable "Sex"
+sex_data <- titanic_train$Sex
+
+# Codificación One Hot Encoding
+encoded_sex <- data.frame(matrix(0, nrow = nrow(titanic_train), ncol = length(unique(sex_data))))
+
+# Asignar nombres a las columnas
+colnames(encoded_sex) <- unique(sex_data)
+
+# Codificado con 0's y 1's
+for (i in 1:length(unique(sex_data))) {
+  encoded_sex[, i] <- as.integer(sex_data == unique(sex_data)[i])
+}
+
+# Resultado
+head(encoded_sex)
+```
+
+## Metodo de contraste - Helmert
+
+Estos métodos crean una variable numérica para cada nivel de la variable cualitativa. La variable numérica representa la diferencia entre el nivel de la variable cualitativa y un nivel de referencia.
+
+La tecnica de Helmert es utilizada en estadísticas y análisis de datos para comparar las medias de diferentes niveles o categorías de una variable categórica frente a un nivel de referencia o base.
+
+```{r}
+# Convertir la variable "Sex" en un factor
+titanic_train$Sex <- factor(titanic_train$Sex)
+
+# Aplicar Helmert
+contrasts(titanic_train$Sex) <- contr.helmert(length(levels(titanic_train$Sex)))
+
+# Mostrar los contrastes
+print(contrasts(titanic_train$Sex))
+```
+
+## Metodo bayesiano Leave one out
+
+Consiste en considerar como sub bloque de validación una única muestra, tomando el resto como sub bloque de entrenamiento, lo que obliga a entrenar tantos modelos como número de muestras existan.
+
+```{r}
+# Dataframe con las variables "Sex" y "Survived" del Titanic
+titanic_data <- titanic_train %>%
+  select(Sex, Survived)
+
+# Codificación Leave One Out
+titanic_data <- titanic_data %>%
+  group_by(Sex) %>%
+  mutate(Leave_One_Out_Encoding = (sum(Survived) - Survived) / (n() - 1))
+
+# Resultado
+head(titanic_data)
+```
+
+```{r}
+# Exportar a PDF
+render("final_galvan.Rmd", output_format = "pdf_document")
+```
